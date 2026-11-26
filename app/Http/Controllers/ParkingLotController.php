@@ -64,7 +64,7 @@ class ParkingLotController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(ParkingLot $parkingLot): JsonResponse | Response
+    public function destroy(ParkingLot $parkingLot): JsonResponse|Response
     {
         if ($parkingLot->parkings()->whereNull("left_at")->exists()) {
             return response()->json(
@@ -80,9 +80,16 @@ class ParkingLotController extends Controller
         return response()->noContent();
     }
 
-    public function parkings(ParkingLot $parkingLot): AnonymousResourceCollection{
-        $parkings = $parkingLot->parkings()->with("parkingLot")->latest("arrived_at")->paginate(15)->withQueryString();
+    public function parkings(
+        ParkingLot $parkingLot,
+    ): AnonymousResourceCollection {
+        $parkings = $parkingLot
+            ->parkings()
+            ->with("parkingLot")
+            ->latest("arrived_at")
+            ->paginate(15)
+            ->withQueryString();
 
-        return ParkingResource::collection($parkings)
+        return ParkingResource::collection($parkings);
     }
 }

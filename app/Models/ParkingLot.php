@@ -17,10 +17,7 @@ class ParkingLot extends Model
         'free_spaces',
     ];
 
-    /**
-     * Default value when "free_spaces" is not sent in the request.
-     * Without this, a missing value would be inserted as NULL.
-     */
+    
     protected $attributes = [
         'free_spaces' => 0,
     ];

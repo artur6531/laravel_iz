@@ -10,15 +10,19 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class ParkingLotFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
-            //
+            "name" => fake()->randomElement([
+                "Belvárosi mélygarázs",
+                "P+R Kossuth tér",
+                "Városháza parkolóház",
+                "Nyugati pályaudvar parkoló",
+                "Széchenyi téri mélygarázs",
+            ]),
+            "address" => fake()->streetAddress(),
+            "hourly_rate" => fake()->randomElement([300, 400, 500, 600, 800]),
+            "free_spaces" => fake()->numberBetween(5, 150),
         ];
     }
 }

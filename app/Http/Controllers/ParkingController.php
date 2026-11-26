@@ -15,20 +15,28 @@ use Illuminate\Validation\ValidationException;
 
 class ParkingController extends Controller
 {
-    public function index(IndexParkingRequest $request) : AnonymousResourceCollection
-    {
-        $sort = $request->input("sort", "-arrived_at");
-        $direction = str_starts_with($sort, "-") ? "desc" : "asc";
-        $column = ltrim($sort, "-");
+    public function index(
+        IndexParkingRequest $request,
+    ): AnonymousResourceCollection {
+        $sort = $request->input('sort', '-arrived_at');
+        $direction = str_starts_with($sort, '-') ? 'desc' : 'asc';
+        $column = ltrim($sort, '-');
         $parkings = Parking::query()
-            ->with("parkingLot")
+            ->with('parkingLot')
             ->when(
-                $request->filled("parking_lot_id"),
-                fn ($query) => $query->where("parking_lot_id", $request->integer("parking_lot_id")),
+                $request->filled('parking_lot_id'),
+                fn ($query) => $query->where(
+                    'parking_lot_id',
+                    $request->integer('parking_lot_id'),
+                ),
             )
             ->when(
-                $request->filled("plate"),
-                fn ($query) => $query->where('license_plate', 'like', '%'.$request->input('plate').'%'),
+                $request->filled('plate'),
+                fn ($query) => $query->where(
+                    'license_plate',
+                    'like',
+                    '%'.$request->input('plate').'%',
+                ),
             )
             ->when($request->has('active'), function ($query) use ($request) {
                 return $request->boolean('active')
@@ -37,31 +45,37 @@ class ParkingController extends Controller
             })
             ->when(
                 $request->filled('date'),
-                fn ($query) => $query->whereDate('arrived_at', $request->input('date')),
-            )     
+                fn ($query) => $query->whereDate(
+                    'arrived_at',
+                    $request->input('date'),
+                ),
+            )
             ->orderBy($column, $direction)
             ->paginate($request->integer('per_page', 15))
             ->withQueryString();
-            return ParkingResource::collection($parkings);
+
+        return ParkingResource::collection($parkings);
     }
 
-    public function store(StoreParkingRequest $request)
+    public function store(StoreParkingRequest $request): JsonResponse
     {
         $validated = $request->validated();
-        
-        $parking =DB::transaction(function () use ($validated) {
-            $parkingLot = ParkingLot::query()->findOrFail($validated["parking_lot_id"]);
+
+        $parking = DB::transaction(function () use ($validated) {
+            $parkingLot = ParkingLot::query()->findOrFail(
+                $validated['parking_lot_id'],
+            );
 
             if ($parkingLot->free_spaces <= 0) {
-               throw ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     'parking_lot_id' => 'The parking lot is full.',
                 ]);
             }
 
             $alreadyParked = Parking::query()
-                ->where("license_plate", $validated["license_plate"])
-                ->whereNull("left_at")
-                ->exits();
+                ->where('license_plate', $validated['license_plate'])
+                ->whereNull('left_at')
+                ->exists();
 
             if ($alreadyParked) {
                 throw ValidationException::withMessages([
@@ -79,11 +93,9 @@ class ParkingController extends Controller
             return $parking;
         });
 
-        $parking->load("parkingLot");
+        $parking->load('parkingLot');
 
-        return (new ParkingResource($parking))
-            ->response()
-            ->setStatusCode(201);
+        return new ParkingResource($parking)->response()->setStatusCode(201);
     }
 
     public function show(Parking $parking): ParkingResource
@@ -132,5 +144,4 @@ class ParkingController extends Controller
 
         return response()->noContent();
     }
-
 }
